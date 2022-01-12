@@ -17,7 +17,7 @@ As this only monitors `service` events it only needs to run in a single node of 
 
 The standard stack compose (in portainer) would be:
 
-```
+```yaml
 version: '3.8'
 
 services:
@@ -34,7 +34,7 @@ services:
 
 A service that needs a capability can now be defined such as:
 
-```
+```yaml
 version: '3.8'
 
 services:
@@ -49,6 +49,16 @@ services:
         io.portainerhack.cap_add: NET_ADMIN
       mode: replicated
       replicas: 1
+```
+
+Both `io.portainerhack.cap_add` and `io.portainerhack.cap_drop` also support a comma-separated list of capabilities, if more than one is required:
+
+```yaml
+...
+    deploy:
+      labels:
+        io.portainerhack.cap_add: NET_ADMIN,SYS_MODULE
+...
 ```
 
 
