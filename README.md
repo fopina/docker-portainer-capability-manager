@@ -11,9 +11,14 @@ This service will try to complement it, by performing a service upgrade on the s
 * If service has any of the labels, check its spec to see if the capabilities are there
 * If not, update the service with the missing capabilitiles (same as `docker service update --cap-add XXX SERVICE_ID`)
 
-## Usage
+## Table of Contents
 
-As this only monitors `service` events it only needs to run in a single node of the swarm cluster but that node needs to be a manager.
+- [Install](#install)
+- [Usage](#usage)
+
+## Install
+
+As this only monitors `service` events it only needs to run in a **single node** of the swarm cluster but that node needs to be a **manager**.
 
 The standard stack compose (in portainer) would be:
 
@@ -32,7 +37,39 @@ services:
         constraints: [node.role == manager]
 ```
 
+<br>
+
+### Steps to add this to Portainer:
+
+1. Click the "Stacks" menu item in your desired Docker Environment
+2. Add a new stack
+
+![Steps 1 and 2 visualised](images/stack1.png)
+
+3. Give it any name
+4. Paste in the "standard stack compose" listed above
+
+![Steps 3 and 4 visualised](images/stack2.png)
+
+5. Deploy the stack
+
+![Step 5 visualised](images/stack3.png)
+
+**Congratulations**, your containers (& services/stacks) should automatically be assigned the capabilites.
+Keep reading below to learn how to apply these labels.
+
+## Usage
+
 A service that needs a capability can now be defined such as:
+
+Add the following label to your container/service
+```yaml
+io.portainerhack.cap_{add/drop}: {CAPABILITY_NAME}
+```
+<br>
+
+Here's an **example** of a Docker stack compose YML with the label applied:
+
 
 ```yaml
 version: '3.8'
