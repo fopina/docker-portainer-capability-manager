@@ -1,9 +1,11 @@
 from . import patched_docker as docker
 import logging
 import argparse
+from threading import Timer
 
 logger = logging.getLogger(__name__)
 
+LABEL_DELAY = 'io.portainerhack.delay'
 LABEL_ADD = 'io.portainerhack.cap_add'
 LABEL_DROP = 'io.portainerhack.cap_drop'
 
@@ -12,18 +14,26 @@ class ServiceMonitor:
     def __init__(self):
         self.client = docker.from_env()
 
+    def update_service(self, service, service_repr, need_add, need_drop):
+        logger.info('Service %s need update - cap_add %s and cap_drop %s', service_repr, need_add, need_drop)
+        # FIXME: review possible replies
+        r = service.update(cap_add=need_add, cap_drop=need_drop)
+        logger.info('Service %s capabilities updated: %s', service_repr, r)
+        return True
+
     def process_service(self, service_id):
         service = self.client.services.get(service_id)
         if service.name:
             service_repr = f'{service.name} ({service.id})'
         else:
             service_repr = service.id
+
         want_add = service.attrs.get('Spec', {}).get('Labels', {}).get(LABEL_ADD)
         want_drop = service.attrs.get('Spec', {}).get('Labels', {}).get(LABEL_DROP)
         if not want_add and not want_drop:
             logger.debug('service %s does not have any of the labels, ignored', service_repr)
             return False
-        
+
         want_add = {f'CAP_{x}' for x in want_add.split(',')} if want_add else set()
         want_drop = {f'CAP_{x}' for x in want_drop.split(',')} if want_drop else set()
         has_add = set(service.attrs.get('Spec', {}).get('TaskTemplate', {}).get('ContainerSpec', {}).get('CapabilityAdd') or [])
@@ -40,11 +50,16 @@ class ServiceMonitor:
         if not need_add and not need_drop:
             logger.debug('Service %s does not need anything, ignored', service_repr)
             return False
-        logger.info('Service %s need update - cap_add %s and cap_drop %s', service_repr, need_add, need_drop)
-        # FIXME: review possible replies
-        r = service.update(cap_add=need_add, cap_drop=need_drop)
-        logger.info('Service %s capabilities updated: %s', service_repr, r)
-        return True
+
+        # Check if service needs delay
+        want_delay = service.attrs.get('Spec', {}).get('Labels', {}).get(LABEL_DELAY)
+
+        if want_delay:
+            want_delay = int(want_delay)
+            logger.info('Service %s delay initiated: %ss', service_repr, want_delay)
+            Timer(int(want_delay), self.update_service, [service, service_repr, need_add, need_drop]).start()
+        else:
+            self.update_service(service, service_repr, need_add, need_drop)
 
     def review_existing_services(self):
         for service in self.client.services.list():
