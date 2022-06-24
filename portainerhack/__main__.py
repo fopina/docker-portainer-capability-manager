@@ -57,7 +57,7 @@ class ServiceMonitor:
         if want_delay:
             want_delay = int(want_delay)
             logger.info('Service %s delay initiated: %ss', service_repr, want_delay)
-            Timer(int(want_delay), self.update_service, [service, service_repr, need_add, need_drop]).start()
+            Timer(want_delay, self.update_service, [service, service_repr, need_add, need_drop]).start()
         else:
             self.update_service(service, service_repr, need_add, need_drop)
 
