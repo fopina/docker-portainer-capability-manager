@@ -1,5 +1,7 @@
 # portainer-capability-manager
 
+**NOTE** portainer finally supports this compose version so this is deprecated
+
 I've been using [swarm-proxy-service](https://github.com/fopina/docker-swarm-service-proxy) for running containers with extra capabilities (or privileged) as docker swarm did not support those.
 
 Finally came docker 20.10 and added capabilities to stacks/services ([docker/cli#2687](https://github.com/docker/cli/pull/2687)) but [portainer doesn't support it yet](https://github.com/portainer/portainer/issues/4684).  
